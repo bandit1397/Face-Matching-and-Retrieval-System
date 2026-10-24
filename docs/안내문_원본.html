@@ -31,6 +31,15 @@ th{background:#eef2f8}
 .y{color:#fff;background:#d99a00;border-radius:10px;padding:1px 9px;font-weight:bold;white-space:nowrap}
 .l{color:#fff;background:#888;border-radius:10px;padding:1px 9px;font-weight:bold;white-space:nowrap}
 .two{display:flex;gap:8px}.two>div{flex:1}
+.flow{display:flex;align-items:center;gap:6px;border:1.5px solid #c9d3e3;border-radius:8px;padding:10px;margin-bottom:8px;break-inside:avoid}
+.fcol{display:flex;flex-direction:column;gap:6px;flex:1}
+.fcol.mid{justify-content:center}
+.fbox{border:2px solid #2f6fd6;border-radius:8px;padding:6px 4px;text-align:center;font-weight:bold;color:#1f3b70;background:#f2f6fd;font-size:10.5pt;line-height:1.25}
+.fbox small{font-weight:normal;color:#555;font-size:8.5pt}
+.fbox.num512{border-color:#6b7785;background:#f5f6f8}
+.fbox.score{border-color:#d99a00;background:#fff8e1}
+.fbox.rank{border-color:#1a9c4b;background:#eef9f1}
+.farrow{font-weight:bold;color:#2f6fd6;font-size:10pt;white-space:nowrap}
 .foot{font-size:8.5pt;color:#777;text-align:right;margin-top:4px}
 </style></head><body>
 
@@ -156,5 +165,68 @@ th{background:#eef2f8}
       <li>화면이 안 열림 → 브라우저 주소창에 <b>127.0.0.1:5000</b> 입력 / 그래도 안 되면 검은 창을 닫고 apps.exe 다시 실행</li>
       <li>"얼굴을 찾지 못했습니다" → 얼굴이 크고 정면으로 나온 사진으로 다시 받기</li>
     </ul></div>
+</div>
+
+<div class="page">
+  <div class="head"><h1>③ 작동 원리</h1>
+  <p>사진 추가 → [DB 다시 읽기] → 현장 사진 끌어다 놓기, 이것만으로 대조가 끝나는 이유</p></div>
+
+  <div class="flow">
+    <div class="fcol">
+      <div class="fbox">등록 사진<br><small>faces 폴더</small></div>
+      <div class="fbox">현장 사진<br><small>끌어다 놓기</small></div>
+    </div>
+    <div class="farrow">AI →</div>
+    <div class="fcol">
+      <div class="fbox num512">숫자 512개<br><small>"얼굴 지문"</small></div>
+      <div class="fbox num512">숫자 512개<br><small>"얼굴 지문"</small></div>
+    </div>
+    <div class="farrow">비교 →</div>
+    <div class="fcol mid"><div class="fbox score">유사도 점수<br><small>0 ~ 100</small></div></div>
+    <div class="farrow">→</div>
+    <div class="fcol mid"><div class="fbox rank">순위 표시<br><small>상위 5명</small></div></div>
+  </div>
+
+  <div class="step"><div class="num">1</div><div>
+    <h2>[DB 다시 읽기]를 누르면 얼굴을 숫자로 바꿔 저장합니다</h2>
+    프로그램은 faces 폴더의 사진마다 다음을 합니다.
+    <ol>
+      <li>사진에서 <b>얼굴 위치를 찾습니다</b> (얼굴 검출 AI)</li>
+      <li>찾은 얼굴을 <b>숫자 512개로 바꿉니다</b> (얼굴 인식 AI)
+        <ul>
+          <li>눈 사이 거리, 코·턱 모양 같은 얼굴 특징을 요약한 일종의 <b>"얼굴 지문"</b>입니다.</li>
+          <li>같은 사람이면 사진이 달라도 비슷한 숫자가, 다른 사람이면 다른 숫자가 나오도록 수백만 장의 얼굴로 미리 학습된 AI입니다.</li>
+        </ul></li>
+      <li>이 숫자들을 <b>data\db.npz</b> 파일에 저장해 둡니다.</li>
+    </ol></div></div>
+
+  <div class="step"><div class="num">2</div><div>
+    <h2>현장 사진을 끌어다 놓으면 숫자끼리 비교합니다</h2>
+    <ol>
+      <li>현장 사진에서도 똑같이 얼굴을 찾아 <b>숫자 512개</b>로 바꿉니다.</li>
+      <li>저장해 둔 등록자 전원의 숫자와 <b>얼마나 비슷한지 계산</b>합니다 → 화면의 <b>유사도 점수</b></li>
+      <li>점수가 높은 순서로 <b>5명</b>을 보여줍니다.</li>
+    </ol></div></div>
+
+  <div class="box gray"><h3>그래서 빠르고 안전합니다</h3>
+    <ul>
+      <li><b>빠른 이유</b>: 사진끼리 직접 비교하지 않고 미리 저장한 숫자끼리 계산합니다. 등록자가 수천 명이어도 1초 안팎에 끝납니다.</li>
+      <li><b>비슷하지만 똑같지 않은 사진도 찾는 이유</b>: 픽셀이 아니라 얼굴 특징을 비교합니다. 조명·옷·배경·표정이 달라도 같은 사람이면 점수가 높게 나옵니다. (시험 결과: 같은 사람 <b>72~79점</b>, 다른 사람 <b>27점 이하</b>)</li>
+      <li><b>안전한 이유</b>: 모든 과정이 <b>사무실 PC 안에서만</b> 일어납니다. 사진이 인터넷으로 나가지 않고, 현장 사진은 저장도 하지 않습니다.</li>
+    </ul></div>
+
+  <div class="box warn"><h3>같은 사람이어도 점수가 낮게 나올 수 있는 경우</h3>
+    <div class="two">
+      <div><ul>
+        <li>측면이나 고개를 숙인 사진</li>
+        <li>너무 작거나 흐린 사진</li>
+      </ul></div>
+      <div><ul>
+        <li>마스크나 모자를 쓴 사진</li>
+        <li>등록 사진이 너무 오래된 경우</li>
+      </ul></div>
+    </div>
+    → 등록 사진은 <b>최근 정면 사진으로 여러 장</b>, 현장에서는 <b>가까이서 정면으로</b> 찍어 달라고 안내하세요.
+  </div>
 </div>
 </body></html>
