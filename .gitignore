@@ -1,0 +1,14 @@
+# 개인정보(얼굴 사진·DB)는 절대 업로드하지 않음
+faces/
+data/
+dist/
+build/
+out/
+models/
+__pycache__/
+*.npz
+*.npy
+*.jpg
+*.jpeg
+*.png
+*.log
